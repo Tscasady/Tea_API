@@ -1,8 +1,6 @@
-name: Ruby
+name: Ruby CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -16,8 +14,13 @@ jobs:
         image: postgres:12.1-alpine
         ports:
           - 5432:5432
-        # needed because the postgres container does not provide a healthcheck
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        env:
+          POSTGRES_DB: Tea_API_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: "postgres://postgres:password@localhost:5432/Tea_API_test"
 
     steps:
       - uses: actions/checkout@v3
@@ -25,10 +28,15 @@ jobs:
         uses: ruby/setup-ruby@v1
       - name: Install dependencies
         run: bundle install
+      - name: Set up database schema
+        run: bin/rails db:schema:load
       - name: Run tests
         run: bundle exec rake
       - name: Simplecov Report
         uses: aki77/simplecov-report-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+  
+
+
 

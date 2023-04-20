@@ -61,7 +61,62 @@ RSpec.describe 'Customer Subscription API' do
 
       get '/api/v1/customers/9123941234/subscriptions'
 
+      error_data = JSON.parse(response.body, symbolize_names: true)
+
       expect(response.status).to eq(404)
+      expect(error_data[:message]).to eq 'Record not Found'
+      expect(error_data[:errors][0][:detail]).to eq "Couldn't find Customer with 'id'=9123941234"
+    end
+  end
+
+  describe 'POST customer subscription' do
+
+    before(:each) do
+      @customer = create(:customer)
+    end
+
+    it 'can create a new subscription for a customer' do
+      tea = create(:tea)
+      sub_params = {
+        tea_id: tea.id,
+        titel: 'Green Tea Subscription',
+        price: 5.00,
+        frequency: 2
+      }
+
+      post "/api/v1/customers/#{@customer.id}/subscriptions", params: JSON.generate(sub_params)
+
+      sub_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to be_successful
+      expect(response.status).to eq(201)
+      expect(sub_data[:data][:id]).to be_a String
+      expect(sub_data[:data][:type]).to eq 'subscription'
+      expect(sub_data[:data][:attributes][:title]).to be_a String
+      expect(sub_data[:data][:attributes][:price]).to be_a Numeric
+      expect(sub_data[:data][:attributes][:frequency]).to be_a Numeric
+      expect(sub_data[:data][:attributes][:status]).to eq 'active'
+    end
+
+    it 'can return a 404 if the given customer doesnt exist' do
+
+      post '/api/v1/customers/1231348932/subscriptions'
+
+      error_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response.status).to eq 404
+      expect(error_data[:message]).to eq '?'
+      expect(error_data[:errors]).to eq '?'
+    end
+
+    it 'can return a 422 if invalid subscription data is given' do
+
+      post "/api/v1/customers/#{@customer.id}/subscriptions"
+
+      error_data = JSON.parse(response.body, symbolize_names: true)
+      expect(response.status).to eq 404
+      expect(error_data[:message]).to eq '?'
+      expect(error_data[:errors]).to eq '?'
     end
   end
 end

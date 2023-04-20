@@ -75,26 +75,28 @@ RSpec.describe 'Customer Subscription API' do
       @customer = create(:customer)
     end
 
-    it 'can create a new subscription for a customer' do
+    it 'can create a new subscription for a customer with a default status of active' do
       tea = create(:tea)
       sub_params = {
         tea_id: tea.id,
-        titel: 'Green Tea Subscription',
+        title: 'Green Tea Subscription',
         price: 5.00,
         frequency: 2
       }
-
-      post "/api/v1/customers/#{@customer.id}/subscriptions", params: JSON.generate(sub_params)
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      post "/api/v1/customers/#{@customer.id}/subscriptions", headers: headers, params: JSON.generate(sub_params)
 
       sub_data = JSON.parse(response.body, symbolize_names: true)
 
+      sub = Subscription.last
+
       expect(response).to be_successful
       expect(response.status).to eq(201)
-      expect(sub_data[:data][:id]).to be_a String
+      expect(sub_data[:data][:id]).to eq sub.id.to_s
       expect(sub_data[:data][:type]).to eq 'subscription'
-      expect(sub_data[:data][:attributes][:title]).to be_a String
-      expect(sub_data[:data][:attributes][:price]).to be_a Numeric
-      expect(sub_data[:data][:attributes][:frequency]).to be_a Numeric
+      expect(sub_data[:data][:attributes][:title]).to eq "Green Tea Subscription"
+      expect(sub_data[:data][:attributes][:price]).to eq 5.00
+      expect(sub_data[:data][:attributes][:frequency]).to eq 2
       expect(sub_data[:data][:attributes][:status]).to eq 'active'
     end
 
@@ -105,18 +107,26 @@ RSpec.describe 'Customer Subscription API' do
       error_data = JSON.parse(response.body, symbolize_names: true)
 
       expect(response.status).to eq 404
-      expect(error_data[:message]).to eq '?'
-      expect(error_data[:errors]).to eq '?'
+      expect(error_data[:message]).to eq 'Record not Found'
+      expect(error_data[:errors][0][:detail]).to eq "Couldn't find Customer with 'id'=1231348932"
     end
 
     it 'can return a 422 if invalid subscription data is given' do
-
-      post "/api/v1/customers/#{@customer.id}/subscriptions"
+      tea = create(:tea)
+      sub_params = {
+        tea_id: tea.id,
+        title: 'Green Tea Subscription',
+        price: 'not a price',
+        frequency: 2
+      }
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      post "/api/v1/customers/#{@customer.id}/subscriptions", headers: headers, params: JSON.generate(sub_params)
 
       error_data = JSON.parse(response.body, symbolize_names: true)
-      expect(response.status).to eq 404
-      expect(error_data[:message]).to eq '?'
-      expect(error_data[:errors]).to eq '?'
+
+      expect(response.status).to eq 400
+      expect(error_data[:message]).to eq 'Record Invalid'
+      expect(error_data[:errors][0][:detail]).to eq 'Validation failed: Price is not a number'
     end
   end
 end

@@ -10,8 +10,10 @@ class Api::V1::Customers::SubscriptionsController < ApplicationController
   end
 
   def update
-    customer = Customer.find(params[:customer_id])
-    render json: SubscriptionSerializer.new(customer.subscriptions.update!(subscription_params))
+    Customer.find(params[:customer_id])
+    sub = Subscription.find(params[:id])
+    sub.update!(status: 'cancelled')
+    render json: SubscriptionSerializer.new(sub)
   end
 
   private

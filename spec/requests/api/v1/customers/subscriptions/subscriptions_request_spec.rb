@@ -138,9 +138,10 @@ RSpec.describe 'Customer Subscription API' do
 
     it 'can cancel an active subscription' do
       tea = create(:tea)
-      create(:subscription, tea: tea, customer: @customer)
+      sub = create(:subscription, tea: tea, customer: @customer)
 
-      patch "/api/v1/customers/#{@customer.id}/subscriptions"
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      patch "/api/v1/customers/#{@customer.id}/subscriptions/#{sub.id}", headers: headers, params: JSON.generate({tea_id: tea.id})
 
       sub_data = JSON.parse(response.body, symbolize_names: true)
 
@@ -155,6 +156,34 @@ RSpec.describe 'Customer Subscription API' do
       expect(sub_data[:data][:attributes][:price]).to eq sub.price
       expect(sub_data[:data][:attributes][:frequency]).to eq sub.frequency
       expect(sub_data[:data][:attributes][:status]).to eq 'cancelled'
+    end
+
+    it 'can return a status 404 if customer doesnt exist' do
+      tea = create(:tea)
+      sub = create(:subscription, tea: tea, customer: @customer)
+
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      patch "/api/v1/customers/1231348932/subscriptions/#{sub.id}", headers: headers, params: JSON.generate({tea_id: tea.id})
+
+      error_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response.status).to eq 404
+      expect(error_data[:message]).to eq 'Record not Found'
+      expect(error_data[:errors][0][:detail]).to eq "Couldn't find Customer with 'id'=1231348932"
+
+    end
+
+    it 'can return a status 404 if subscription doesnt exist' do
+      tea = create(:tea)
+
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      patch "/api/v1/customers/#{@customer.id}/subscriptions/12312321", headers: headers, params: JSON.generate({tea_id: tea.id})
+
+      error_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response.status).to eq 404
+      expect(error_data[:message]).to eq 'Record not Found'
+      expect(error_data[:errors][0][:detail]).to eq "Couldn't find Subscription with 'id'=12312321"
     end
   end
 end

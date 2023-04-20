@@ -29,22 +29,39 @@ RSpec.describe 'Customer Subscription API' do
       end
     end
 
-    xit 'can return active and cancelled subscriptions' do
-      create(:subscriptions, @customer)
-
-      get "api/v1/customers/#{@customer.id}/subscriptions"
-    end
-
-    xit 'can return an empty array if a customer has no subscriptions' do
+    it 'can return active and cancelled subscriptions' do
+      create(:subscription, customer: @customer, status: 'active')
+      create(:subscription, customer: @customer, status: 'cancelled')
 
       get "api/v1/customers/#{@customer.id}/subscriptions"
 
-      expect(response)
+      sub_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to be_successful
+      expect(response.status).to eq(200)
+      expect(sub_data[:data]).to be_an Array
+      expect(sub_data[:data].length).to eq 2
+      expect(sub_data[:data][0][:attributes][:status]).to eq 'active'
+      expect(sub_data[:data][1][:attributes][:status]).to eq 'cancelled'
     end
 
-    xit 'can return a 404 if an invalid customer id is given' do
+    it 'can return an empty array if a customer has no subscriptions' do
+
+      get "api/v1/customers/#{@customer.id}/subscriptions"
+
+      sub_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to be_successful
+      expect(response.status).to eq(200)
+      expect(sub_data[:data]).to be_an Array
+      expect(sub_data[:data].length).to eq 0
+    end
+
+    it 'can return a 404 if an invalid customer id is given' do
 
       get 'api/v1/customers/9123941234/subscriptions'
+
+      expect(response.status).to eq(404)
 
     end
 

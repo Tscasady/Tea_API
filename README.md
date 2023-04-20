@@ -5,6 +5,9 @@
 #### Overview
 
 This project is a simple RESTful BackEnd for a hypothetical Tea Shop, where customers can subscribe to a tea and recieve regular shipments of that product. It exposes three endpoints, allowing a user to update a customer's subscripitions, change the status of those subscriptions, and retrieve a list of all subscriptions that customer has.
+
+The goal of this project was to demonstrate an ability to quickly complete a 'take-home' style assignment, focusing on project presentation, organization and completion in a timely manner, rather producing a technically rigorous project. 
+
    
    
 ## Getting Started

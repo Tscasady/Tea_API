@@ -129,4 +129,61 @@ RSpec.describe 'Customer Subscription API' do
       expect(error_data[:errors][0][:detail]).to eq 'Validation failed: Price is not a number'
     end
   end
+
+  describe 'PATCH customer subscriptions' do
+
+    before(:each) do
+      @customer = create(:customer)
+    end
+
+    it 'can cancel an active subscription' do
+      tea = create(:tea)
+      sub = create(:subscription, tea: tea, customer: @customer)
+
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      patch "/api/v1/customers/#{@customer.id}/subscriptions/#{sub.id}", headers: headers, params: JSON.generate({tea_id: tea.id})
+
+      sub_data = JSON.parse(response.body, symbolize_names: true)
+
+      sub = Subscription.last
+
+      expect(sub.status).to eq 'cancelled'
+
+      expect(response.status).to eq 200
+      expect(sub_data[:data][:id]).to eq sub.id.to_s
+      expect(sub_data[:data][:type]).to eq 'subscription'
+      expect(sub_data[:data][:attributes][:title]).to eq sub.title
+      expect(sub_data[:data][:attributes][:price]).to eq sub.price
+      expect(sub_data[:data][:attributes][:frequency]).to eq sub.frequency
+      expect(sub_data[:data][:attributes][:status]).to eq 'cancelled'
+    end
+
+    it 'can return a status 404 if customer doesnt exist' do
+      tea = create(:tea)
+      sub = create(:subscription, tea: tea, customer: @customer)
+
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      patch "/api/v1/customers/1231348932/subscriptions/#{sub.id}", headers: headers, params: JSON.generate({tea_id: tea.id})
+
+      error_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response.status).to eq 404
+      expect(error_data[:message]).to eq 'Record not Found'
+      expect(error_data[:errors][0][:detail]).to eq "Couldn't find Customer with 'id'=1231348932"
+
+    end
+
+    it 'can return a status 404 if subscription doesnt exist' do
+      tea = create(:tea)
+
+      headers = { 'CONTENT_TYPE' => 'application/json' }
+      patch "/api/v1/customers/#{@customer.id}/subscriptions/12312321", headers: headers, params: JSON.generate({tea_id: tea.id})
+
+      error_data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response.status).to eq 404
+      expect(error_data[:message]).to eq 'Record not Found'
+      expect(error_data[:errors][0][:detail]).to eq "Couldn't find Subscription with 'id'=12312321"
+    end
+  end
 end

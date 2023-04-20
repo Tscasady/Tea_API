@@ -10,7 +10,7 @@ RSpec.describe 'Customer Subscription API' do
     it 'can return a list of subscriptions associated with a customer' do
       create_list(:subscription, 3, customer: @customer)
 
-      get "api/v1/customers/#{@customer.id}/subscriptions"
+      get "/api/v1/customers/#{@customer.id}/subscriptions"
 
       sub_data = JSON.parse(response.body, symbolize_names: true)
 
@@ -33,7 +33,7 @@ RSpec.describe 'Customer Subscription API' do
       create(:subscription, customer: @customer, status: 'active')
       create(:subscription, customer: @customer, status: 'cancelled')
 
-      get "api/v1/customers/#{@customer.id}/subscriptions"
+      get "/api/v1/customers/#{@customer.id}/subscriptions"
 
       sub_data = JSON.parse(response.body, symbolize_names: true)
 
@@ -47,7 +47,7 @@ RSpec.describe 'Customer Subscription API' do
 
     it 'can return an empty array if a customer has no subscriptions' do
 
-      get "api/v1/customers/#{@customer.id}/subscriptions"
+      get "/api/v1/customers/#{@customer.id}/subscriptions"
 
       sub_data = JSON.parse(response.body, symbolize_names: true)
 
@@ -59,11 +59,9 @@ RSpec.describe 'Customer Subscription API' do
 
     it 'can return a 404 if an invalid customer id is given' do
 
-      get 'api/v1/customers/9123941234/subscriptions'
+      get '/api/v1/customers/9123941234/subscriptions'
 
       expect(response.status).to eq(404)
-
     end
-
   end
 end
